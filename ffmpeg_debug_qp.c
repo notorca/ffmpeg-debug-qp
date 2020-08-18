@@ -46,7 +46,6 @@ static int video_dst_bufsize;
 static int video_stream_idx = -1;
 static AVFrame *frame = NULL;
 static AVPacket pkt;
-static int video_frame_count = 0;
 
 /* The different ways of decoding and managing data memory. You are not
  * supposed to support all the modes in your application but pick the one most
@@ -65,8 +64,6 @@ static int decode_packet(int *got_frame, int cached)
     int ret = 0;
     int decoded = pkt.size;
     int mb_width = (video_dec_ctx->width + 15) / 16;
-    int mb_height = (video_dec_ctx->height + 15) / 16;
-    int mb_stride = mb_width + 1;
 
     *got_frame = 0;
 
@@ -94,9 +91,11 @@ static int decode_packet(int *got_frame, int cached)
     }
 
    if (*got_frame) {
-       av_log(video_dec_ctx, AV_LOG_INFO, "<< frame_type: %c; pkt_size: %d >>\n",
+       av_log(video_dec_ctx, AV_LOG_INFO, "<< frame_type: %c; pkt_size: %d; ts: %lld; mb_width: %d >>\n",
                 av_get_picture_type_char(frame->pict_type),
-                av_frame_get_pkt_size(frame));
+                frame->pkt_size,
+                av_rescale_q(frame->pts, video_stream->time_base, (AVRational){1, 1000}),
+                mb_width);
    }
 
     /* If we use the new API with reference counting, we own the data and need
@@ -185,7 +184,7 @@ int main (int argc, char **argv)
         print_usage_and_exit(argv[0]);
     }
     src_filename = argv[1];
-    
+
     if (argc == 3) {
         const char *macroblock_arg = argv[2];
         const char *ptr_switch = &macroblock_switch[0];
