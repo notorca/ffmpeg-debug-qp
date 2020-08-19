@@ -242,7 +242,7 @@ def parse_logfile(input_file, compute_averages_only, include_macroblock_data):
 
 
 def print_data_header():
-    return "frame_type,frame_size,qp_avg,timestamp,mb_width"
+    return "frame_type,frame_size,timestamp,mb_width,qp_avg"
 
 
 def format_line(data, data_format="ld-json"):
